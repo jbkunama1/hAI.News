@@ -1,0 +1,33 @@
+services:
+  news:
+    image: ${NEWS_IMAGE:-ghcr.io/jbkunama1/hai.news:latest}
+    restart: unless-stopped
+    ports:
+      - "${NEWS_PORT:-8096}:8080"
+    environment:
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Mindestens 12 Zeichen}
+      SECRET_KEY: ${SECRET_KEY:?Mindestens 32 zufaellige Zeichen}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      DB_PATH: /data/news.db
+      TZ: Europe/Berlin
+    volumes:
+      - news_data:/data
+    networks:
+      - highfishNetwork
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+volumes:
+  news_data:
+networks:
+  highfishNetwork:
+    external: true
