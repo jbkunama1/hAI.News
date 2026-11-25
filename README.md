@@ -29,12 +29,12 @@ GitHub Actions baut das Image und veröffentlicht es in GHCR; Portainer liest `d
 2. Das GHCR-Paket ist bei einem privaten Repository zunächst privat: Entweder Paket öffentlich stellen oder in Portainer eine GHCR-Registry mit Access Token (`read:packages`) hinterlegen.
 3. Docker-Netzwerk anlegen, falls nicht vorhanden: `docker network create highfishNetwork`. Der Stack nutzt es als externes Netzwerk.
 4. Portainer → Stacks → Add stack → Repository: Repository-URL, Reference `refs/heads/main`, Compose path `docker-compose.yml`. Bei privatem Repository Authentifizierung aktivieren.
-5. Umgebungsvariablen setzen und deployen. Aufruf: `http://SERVER-IP:8666`.
+5. Umgebungsvariablen setzen und deployen. Aufruf: `http://SERVER-IP:8055`.
 
 | Variable | Bedeutung |
 |---|---|
 | `NEWS_IMAGE` | Optional, Standard `ghcr.io/jbkunama1/hai.news:latest` |
-| `NEWS_PORT` | Host-Port, Standard `8666` (Container-intern 8080) |
+| `NEWS_PORT` | Host-Port, Standard `8055` (Container-intern 8080) |
 | `ADMIN_PASSWORD` | Pflicht, mindestens 6 Zeichen (kürzere Passwörter sind leicht zu erraten; für Internetbetrieb länger wählen) |
 | `SECRET_KEY` | Pflicht, mindestens 32 Zeichen, stabil halten (`openssl rand -hex 32`) |
 | `COOKIE_SECURE` | `false` bei HTTP im LAN, `true` bei HTTPS |
@@ -46,7 +46,7 @@ Secrets nicht committen.
 ```sh
 cp .env.example .env   # Passwort und Schlüssel eintragen
 docker compose --env-file .env -f compose.local.yml up -d --build
-curl http://localhost:8666/health
+curl http://localhost:8055/health
 ```
 
 ## Betrieb und Grenzen

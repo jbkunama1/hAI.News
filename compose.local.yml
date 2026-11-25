@@ -2,7 +2,7 @@ services:
   news:
     build: .
     restart: unless-stopped
-    ports: ["${NEWS_PORT:-8666}:8080"]
+    ports: ["${NEWS_PORT:-8055}:8080"]
     environment:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Passwort setzen}
       SECRET_KEY: ${SECRET_KEY:?Secret setzen}
