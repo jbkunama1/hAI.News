@@ -7,8 +7,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 logging.basicConfig(level=logging.INFO)
 PASSWORD=os.environ.get('ADMIN_PASSWORD','')
 SECRET=os.environ.get('SECRET_KEY','')
-if len(PASSWORD)<12 or len(SECRET)<32:
-    raise RuntimeError('ADMIN_PASSWORD >=12 und SECRET_KEY >=32 Zeichen erforderlich')
+if len(PASSWORD)<6 or len(SECRET)<32:
+    raise RuntimeError('ADMIN_PASSWORD >=6 und SECRET_KEY >=32 Zeichen erforderlich')
 HASH=generate_password_hash(PASSWORD)
 app=Flask(__name__,static_folder='static')
 app.secret_key=SECRET

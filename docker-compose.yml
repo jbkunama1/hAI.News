@@ -3,9 +3,9 @@ services:
     image: ${NEWS_IMAGE:-ghcr.io/jbkunama1/hai.news:latest}
     restart: unless-stopped
     ports:
-      - "${NEWS_PORT:-8096}:8080"
+      - "${NEWS_PORT:-8666}:8080"
     environment:
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Mindestens 12 Zeichen}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Mindestens 6 Zeichen}
       SECRET_KEY: ${SECRET_KEY:?Mindestens 32 zufaellige Zeichen}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
       DB_PATH: /data/news.db
