@@ -10,16 +10,34 @@
 ![Mobile First](https://img.shields.io/badge/UI-Mobile%20First-2866d6)
 ![Platforms](https://img.shields.io/badge/Platforms-amd64%20%7C%20arm64-555555)
 
-Mobile-first RSS-Nachrichtenübersicht mit Flask und SQLite. Quellen: SPIEGEL, ntv, Financial Times, CNN (experimentell), heise, Tagesschau, TechCrunch, Ars Technica. Es werden Titel, kurze Feed-Anrisse und Original-Links angezeigt; kein Volltext-Abruf, keine Paywall-Umgehung, keine Google-API. Kein Google-News-Klon mit semantischem Clustering: chronologische Ansicht, Kategorien, Quellenauswahl, Suche und Nachladen.
+Mobile-first RSS-Nachrichtenübersicht mit Flask und SQLite. Die App zeigt Titel, Teaser, den vom Feed gelieferten Inhalt und Original-Links; kein Volltext-Abruf von den Verlagsseiten, keine Paywall-Umgehung, keine Google-API. Kein Google-News-Klon mit semantischem Clustering: chronologische Ansicht, Kategorien, Quellenauswahl, Suche und Nachladen.
 
 ## Funktionen
 
 - Öffentliche Leseansicht, passwortgeschützte Administration.
-- Feeds hinzufügen, aktivieren/deaktivieren und entfernen; Kategorie beim Hinzufügen.
+- Leseansicht je Artikel: zeigt den Inhalt, den der Feed mitliefert (Teaser oder Auszug), mit Hinweis und Link „Beim Verlag lesen“.
+- Feeds hinzufügen, aktivieren/deaktivieren und entfernen; Kategorie beim Hinzufügen; Button „Feed testen“ prüft eine URL vor dem Speichern.
 - Serverseitiger Abruf, Standard alle **15 Minuten**, im Admin einstellbar (5–1440 Minuten), manueller Abruf.
 - Persistente SQLite-Daten, URL-Deduplizierung, 30 Tage Aufbewahrung.
 - Quellstatus mit Fehler, letztem Versuch und letztem erfolgreichen Abruf.
 - Hell-/Dunkelmodus, responsive Kartenansicht, keine externen Fonts/CDNs/Bilder.
+
+## Voreingestellte Quellen
+
+| Kategorie | Quellen |
+|---|---|
+| Nachrichten | DER SPIEGEL, ntv, Tagesschau, ZDFheute, Deutschlandfunk |
+| Wirtschaft | Financial Times |
+| International | BBC News World, Al Jazeera, CNN (experimentell) |
+| Technologie | heise online, TechCrunch, Ars Technica, Golem.de, The Verge, Hacker News |
+
+Bei bestehenden Installationen kommen die neu hinzugefügten Quellen (ZDFheute, Deutschlandfunk, BBC, Al Jazeera, Golem.de, The Verge, Hacker News) beim ersten Start der neuen Version einmalig dazu; vorhandene Quellen und Einstellungen bleiben unverändert. Wer eine Quelle entfernt, bekommt sie nicht erneut angelegt.
+
+Stand der Feed-Prüfung (einmaliger Abruf am 26.11.2026): SPIEGEL, Financial Times, heise, ZDFheute, Deutschlandfunk, Golem, BBC und Al Jazeera lieferten aktuelle Einträge. CNN und Tagesschau waren im Test nicht abrufbar. Bei n-tv, Hacker News und der (nicht voreingestellten) Deutschen Welle zeigte der Test einen älteren Stand. Feeds ändern sich; der Status je Quelle steht im Admin-Bereich.
+
+## Inhalte und Rechte
+
+Die App zeigt nur, was der jeweilige Feed ausliefert, und verlinkt zum Original. Nutzungsbedingungen der Feeds beachten: ntv erlaubt RSS-Meldungen z. B. nur unverändert, nur online und ohne Weitergabe an Dritte. Bei öffentlich erreichbarer Instanz ist das zu prüfen; die Leseansicht gehört dann hinter einen Zugriffsschutz. Financial Times und andere Bezahlquellen liefern nur Teaser.
 
 ## Deployment mit Portainer
 
@@ -55,8 +73,8 @@ curl http://localhost:8055/health
 - Login: nach 8 Fehlversuchen pro Quell-IP 15 Minuten gesperrt (im RAM). Hinter Reverse Proxy teilen sich Nutzer ggf. eine IP.
 - Für Internetbetrieb HTTPS und zusätzlichen Zugriffsschutz vorschalten.
 - Feed-URLs: private/reservierte Ziele und Redirects werden geprüft; keine vollständige DNS-Rebinding-Abwehr, daher ausgehenden Zugriff auf interne Netze zusätzlich per Firewall begrenzen.
-- Feed-Adressen sind nicht live verifiziert. CNN-Feed kann eingestellt oder veraltet sein; Fehler erscheinen im Admin. FT-Artikel können ein Abonnement erfordern.
-- Feed-Nutzungsbedingungen beachten; RSS ist keine pauschale Nutzungslizenz.
+- Feed-Inhalt wird als reiner Text gespeichert und angezeigt (HTML wird entfernt, keine Bilder). Maximal 8000 Zeichen je Artikel.
+- Ältere, schon gespeicherte Artikel haben nach dem Update zunächst keinen Zusatzinhalt, bis sie im Feed erneut auftauchen; die Leseansicht zeigt dann den Teaser.
 - Backup: Container stoppen, Volume `news_data` sichern.
 - Updates: neues Image abwarten, Stack in Portainer aktualisieren und Image neu ziehen; für reproduzierbare Stände SHA-Tag verwenden.
 
@@ -66,4 +84,4 @@ Projektseite unter `docs/index.html` (Settings → Pages → Branch `main`, Ordn
 
 ## Prüfstatus
 
-Python-Syntax geprüft. Docker-Build, Browser-Test und Feed-Liveabrufe stehen bis zum ersten erfolgreichen Workflow-Lauf aus.
+Python-Syntax und JavaScript-Syntax geprüft; Hilfsfunktionen für Textbereinigung und die Datenbank-Migration lokal getestet. Docker-Build, Browser-Test und Feed-Liveabrufe durch die App stehen bis zum ersten erfolgreichen Workflow-Lauf aus.

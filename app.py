@@ -19,11 +19,17 @@ def db():
     c=sqlite3.connect(DB,timeout=30); c.row_factory=sqlite3.Row
     c.execute('PRAGMA foreign_keys=ON'); return c
 SEEDS=[('DER SPIEGEL','https://www.spiegel.de/schlagzeilen/index.rss','Nachrichten'),('ntv','https://www.n-tv.de/rss','Nachrichten'),('Financial Times','https://www.ft.com/world?format=rss','Wirtschaft'),('CNN (experimentell)','https://rss.cnn.com/rss/edition.rss','International'),('heise online','https://www.heise.de/rss/heise-atom.xml','Technologie'),('Tagesschau','https://www.tagesschau.de/xml/rss2/','Nachrichten'),('TechCrunch','https://techcrunch.com/feed/','Technologie'),('Ars Technica','https://feeds.arstechnica.com/arstechnica/index','Technologie')]
+SEEDS_V2=[('ZDFheute','https://www.zdf.de/rss/zdf/nachrichten','Nachrichten'),('Deutschlandfunk','https://www.deutschlandfunk.de/nachrichten-100.rss','Nachrichten'),('BBC News World','https://feeds.bbci.co.uk/news/world/rss.xml','International'),('Al Jazeera','https://www.aljazeera.com/xml/rss/all.xml','International'),('Golem.de','https://rss.golem.de/rss.php?feed=RSS2.0','Technologie'),('The Verge','https://www.theverge.com/rss/index.xml','Technologie'),('Hacker News','https://news.ycombinator.com/rss','Technologie')]
 with db() as c:
     c.executescript('CREATE TABLE IF NOT EXISTS feeds(id INTEGER PRIMARY KEY,name TEXT NOT NULL,url TEXT UNIQUE NOT NULL,category TEXT NOT NULL,enabled INTEGER DEFAULT 1,last_attempt REAL,last_success REAL,error TEXT); CREATE TABLE IF NOT EXISTS articles(id INTEGER PRIMARY KEY,feed_id INTEGER REFERENCES feeds(id) ON DELETE CASCADE,title TEXT,url TEXT UNIQUE,summary TEXT,published REAL); CREATE INDEX IF NOT EXISTS articles_date ON articles(published DESC); CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY,value TEXT);')
+    if 'content' not in {r[1] for r in c.execute('PRAGMA table_info(articles)')}:
+        c.execute('ALTER TABLE articles ADD COLUMN content TEXT')
     if not c.execute("SELECT 1 FROM settings WHERE key='seeded'").fetchone():
         c.executemany('INSERT OR IGNORE INTO feeds(name,url,category) VALUES(?,?,?)',SEEDS)
         c.execute("INSERT INTO settings VALUES('seeded','1')")
+    if not c.execute("SELECT 1 FROM settings WHERE key='seeded_v2'").fetchone():
+        c.executemany('INSERT OR IGNORE INTO feeds(name,url,category) VALUES(?,?,?)',SEEDS_V2)
+        c.execute("INSERT INTO settings VALUES('seeded_v2','1')")
     c.execute("INSERT OR IGNORE INTO settings VALUES('interval','15')")
 
 def public_url(url):
@@ -38,7 +44,7 @@ def public_url(url):
 def download(url):
     for _ in range(5):
         public_url(url)
-        with requests.get(url,timeout=(5,20),stream=True,allow_redirects=False,headers={'User-Agent':'hAI.News/0.1 RSS reader'}) as r:
+        with requests.get(url,timeout=(5,20),stream=True,allow_redirects=False,headers={'User-Agent':'hAI.News/0.2 RSS reader'}) as r:
             if r.is_redirect:
                 url=urljoin(url,r.headers['Location']); continue
             r.raise_for_status(); chunks=[]; size=0
@@ -51,6 +57,18 @@ def download(url):
 
 def text(value):
     return html.unescape(re.sub('<[^>]+>',' ',str(value or '')))[:1500].strip()
+def plain(value,limit=8000):
+    s=re.sub(r'(?is)<(script|style)[^>]*>.*?</\1>',' ',str(value or ''))
+    s=re.sub(r'(?i)<br\s*/?>|</p>|</div>|</li>|</h[1-6]>|</figure>','\n',s)
+    s=html.unescape(re.sub('<[^>]+>',' ',s))
+    s=re.sub(r'[ \t\r\f\v\u00a0]+',' ',s)
+    s=re.sub(r' ?\n ?','\n',s)
+    s=re.sub(r'\n{3,}','\n\n',s)
+    return s.strip()[:limit]
+def entry_content(e):
+    parts=e.get('content') or []
+    body=plain(parts[0].get('value','')) if parts else ''
+    return body or plain(e.get('summary',''))
 def article_url(value):
     p=urlparse(value)
     return value if p.scheme in ('http','https') and p.hostname and not p.username else None
@@ -70,7 +88,9 @@ def refresh():
                         if not url: continue
                         stamp=e.get('published_parsed') or e.get('updated_parsed')
                         published=min(calendar.timegm(stamp),now) if stamp else now
-                        c.execute('INSERT OR IGNORE INTO articles(feed_id,title,url,summary,published) VALUES(?,?,?,?,?)',(f['id'],text(e.get('title','Ohne Titel')),url,text(e.get('summary','')),published))
+                        body=entry_content(e)
+                        c.execute('INSERT OR IGNORE INTO articles(feed_id,title,url,summary,published,content) VALUES(?,?,?,?,?,?)',(f['id'],text(e.get('title','Ohne Titel')),url,text(e.get('summary','')),published,body))
+                        c.execute('UPDATE articles SET content=? WHERE url=? AND content IS NULL',(body,url))
                     c.execute('UPDATE feeds SET last_attempt=?,last_success=?,error=NULL WHERE id=?',(now,now,f['id']))
             except Exception as exc:
                 logging.warning('Feed %s: %s',f['name'],exc)
@@ -128,13 +148,28 @@ def news():
     if category: where.append('f.category=?'); params.append(category)
     if source: where.append('f.id=?'); params.append(source)
     with db() as c:
-        rows=c.execute('SELECT a.*,f.name AS source,f.category FROM articles a JOIN feeds f ON a.feed_id=f.id WHERE '+' AND '.join(where)+' ORDER BY a.published DESC LIMIT 31 OFFSET ?',params+[page*30]).fetchall()
+        rows=c.execute('SELECT a.id,a.title,a.url,a.summary,a.published,f.name AS source,f.category FROM articles a JOIN feeds f ON a.feed_id=f.id WHERE '+' AND '.join(where)+' ORDER BY a.published DESC LIMIT 31 OFFSET ?',params+[page*30]).fetchall()
         feeds=c.execute('SELECT id,name,category,last_success,error FROM feeds WHERE enabled=1').fetchall()
         interval=int(c.execute("SELECT value FROM settings WHERE key='interval'").fetchone()[0])
     return jsonify(articles=[dict(x) for x in rows[:30]],more=len(rows)>30,feeds=[dict(x) for x in feeds],interval=interval,refreshing=lock.locked())
+@app.get('/api/article/<int:aid>')
+def article(aid):
+    with db() as c:
+        row=c.execute('SELECT a.id,a.title,a.url,a.summary,a.content,a.published,f.name AS source,f.category FROM articles a JOIN feeds f ON a.feed_id=f.id WHERE a.id=? AND f.enabled=1',(aid,)).fetchone()
+    if not row: return jsonify(error='Artikel nicht gefunden'),404
+    d=dict(row); d['content']=d['content'] or d['summary'] or ''
+    d['teaser_only']=len(d['content'])<=len(d['summary'] or '')+40
+    return jsonify(d)
 @app.get('/api/admin/feeds')
 def feeds():
     with db() as c: return jsonify([dict(x) for x in c.execute('SELECT * FROM feeds')])
+@app.post('/api/admin/feeds/test')
+def test_feed():
+    url=public_url(str((request.json or {}).get('url','')).strip())
+    try: parsed=feedparser.parse(download(url))
+    except Exception as exc: raise ValueError('Abruf fehlgeschlagen: '+str(exc)[:200])
+    if not parsed.entries: raise ValueError('Kein gültiger Feed oder keine Einträge')
+    return jsonify(ok=True,title=text(parsed.feed.get('title','')),count=len(parsed.entries),sample=[text(e.get('title','')) for e in parsed.entries[:3]],has_content=any(bool(e.get('content')) for e in parsed.entries[:10]))
 @app.post('/api/admin/feeds')
 def add_feed():
     d=request.json or {}; url=public_url(str(d.get('url','')).strip()); name=text(d.get('name',''))[:100]; cat=text(d.get('category','Nachrichten'))[:50]
