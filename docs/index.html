@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>hAI.News – RSS-Nachrichtenübersicht</title>
+<meta name="description" content="Mobile-first RSS-Aggregator für Portainer: Flask, SQLite, Docker, GHCR.">
+<style>
+:root{--bg:#f5f7fb;--card:#fff;--text:#182236;--muted:#617087;--line:#dfe5ef;--accent:#2866d6}
+@media(prefers-color-scheme:dark){:root{--bg:#111722;--card:#1c2534;--text:#edf2fa;--muted:#a4b0c5;--line:#344157;--accent:#8bb5ff}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,sans-serif}
+main{max-width:880px;margin:auto;padding:28px 16px}h1{font-size:clamp(30px,7vw,48px);margin:.2em 0}h1 span{color:var(--accent)}
+p{color:var(--muted)}.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin:24px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}.card h2{font-size:18px;margin:0 0 6px}
+a.btn{display:inline-block;margin:6px 8px 6px 0;padding:11px 16px;border:1px solid var(--accent);border-radius:12px;color:var(--accent);text-decoration:none}
+pre{overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;font-size:14px}
+footer{margin-top:32px;font-size:13px;color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+<h1>hAI<span>.News</span></h1>
+<p>Selbst gehosteter, mobile-first RSS-Nachrichtenüberblick mit Admin-Bereich, einstellbarem Abrufintervall (Standard: 15 Minuten) und Portainer-Stack.</p>
+<a class="btn" href="https://github.com/jbkunama1/hAI.News">Repository</a>
+<a class="btn" href="https://github.com/jbkunama1/hAI.News/actions">Build-Status</a>
+<div class="grid">
+<section class="card"><h2>Feeds</h2><p>RSS/Atom-Quellen im Admin-Bereich hinzufügen, deaktivieren oder entfernen.</p></section>
+<section class="card"><h2>Mobile First</h2><p>Kartenansicht, Suche, Themen- und Quellenfilter, Hell-/Dunkelmodus.</p></section>
+<section class="card"><h2>Portainer</h2><p>Stack aus dem Repository, Image aus GHCR, Netzwerk highfishNetwork.</p></section>
+</div>
+<h2>Schnellstart</h2>
+<pre>Portainer → Stacks → Add stack → Repository
+Reference: refs/heads/main
+Compose path: docker-compose.yml
+Variablen: NEWS_IMAGE, NEWS_PORT, ADMIN_PASSWORD, SECRET_KEY, COOKIE_SECURE</pre>
+<p>Die Pages-Seite ist reine Projektdokumentation. Die Anwendung selbst läuft als Container und benötigt einen Server.</p>
+<footer>hAI.News · Artikel öffnen beim jeweiligen Verlag</footer>
+</main>
+</body>
+</html>
