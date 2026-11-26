@@ -8,19 +8,23 @@
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
 ![Portainer](https://img.shields.io/badge/Portainer-Stack-13BEF9?logo=portainer&logoColor=white)
 ![Mobile First](https://img.shields.io/badge/UI-Mobile%20First-2866d6)
+![Themes](https://img.shields.io/badge/Themes-5-8bb5ff)
 ![Platforms](https://img.shields.io/badge/Platforms-amd64%20%7C%20arm64-555555)
 
-Mobile-first RSS-Nachrichtenübersicht mit Flask und SQLite. Die App zeigt Titel, Teaser, den vom Feed gelieferten Inhalt und Original-Links; kein Volltext-Abruf von den Verlagsseiten, keine Paywall-Umgehung, keine Google-API. Kein Google-News-Klon mit semantischem Clustering: chronologische Ansicht, Kategorien, Quellenauswahl, Suche und Nachladen.
+Mobile-first RSS-Nachrichtenübersicht mit Flask und SQLite. Die App zeigt Titel, Teaser, Vorschaubild, den vom Feed gelieferten Inhalt und Original-Links; kein Volltext-Abruf von den Verlagsseiten, keine Paywall-Umgehung, keine Google-API. Kein Google-News-Klon mit semantischem Clustering: chronologische Ansicht, Themen, Quellenauswahl, Suche und Nachladen.
 
 ## Funktionen
 
 - Öffentliche Leseansicht, passwortgeschützte Administration.
+- **Mobile-first:** einspaltige Karten mit Vorschaubild rechts, wischbare Themenleiste, die beim Scrollen oben bleibt, Bedienelemente mit mindestens 44 px Höhe, Lese- und Admin-Dialog als Sheet von unten, relative Zeitangaben („vor 5 Min.“). Ab 700 px zwei, ab 1050 px drei Spalten mit Bild über dem Text.
+- **Themes:** Auto (folgt dem System), Hell, Dunkel, Schwarz (OLED) und Sepia. Die Auswahl steht im Kopfbereich und wird im Browser gespeichert. Die Browser-Statusleiste passt sich an.
+- **Schriftgröße:** im Lesedialog mit A− und A+ in vier Stufen, gilt für die ganze Seite und wird im Browser gespeichert.
+- **Vorschaubilder:** aus `media:thumbnail`, `media:content`, Bild-Anhang oder dem ersten Bild im Feed-Text. Fehlt ein Bild oder lädt es nicht, zeigt die Karte nur Text.
 - Leseansicht je Artikel: zeigt den Inhalt, den der Feed mitliefert (Teaser oder Auszug), mit Hinweis und Link „Beim Verlag lesen“.
-- Feeds hinzufügen, aktivieren/deaktivieren und entfernen; Kategorie beim Hinzufügen; Button „Feed testen“ prüft eine URL vor dem Speichern.
+- Feeds hinzufügen, aktivieren/deaktivieren und entfernen; Kategorie beim Hinzufügen. „Feed testen“ prüft eine URL vor dem Speichern und meldet Titel, Anzahl der Einträge, Beispiele sowie ob Inhalt und Vorschaubilder geliefert werden.
 - Serverseitiger Abruf, Standard alle **15 Minuten**, im Admin einstellbar (5–1440 Minuten), manueller Abruf.
 - Persistente SQLite-Daten, URL-Deduplizierung, 30 Tage Aufbewahrung.
 - Quellstatus mit Fehler, letztem Versuch und letztem erfolgreichen Abruf.
-- Hell-/Dunkelmodus, responsive Kartenansicht, keine externen Fonts/CDNs/Bilder.
 
 ## Voreingestellte Quellen
 
@@ -28,12 +32,18 @@ Mobile-first RSS-Nachrichtenübersicht mit Flask und SQLite. Die App zeigt Titel
 |---|---|
 | Nachrichten | DER SPIEGEL, ntv, Tagesschau, ZDFheute, Deutschlandfunk |
 | Wirtschaft | Financial Times |
-| International | BBC News World, Al Jazeera, CNN (experimentell) |
+| International | BBC News World, Al Jazeera |
 | Technologie | heise online, TechCrunch, Ars Technica, Golem.de, The Verge, Hacker News |
+| Sport | Sportschau |
+| 2. Bundesliga | Sportschau 2. Bundesliga |
+| Biologie | Phys.org Biologie, ScienceDaily Biologie |
+| Internet | t3n, netzpolitik.org |
 
-Bei bestehenden Installationen kommen die neu hinzugefügten Quellen (ZDFheute, Deutschlandfunk, BBC, Al Jazeera, Golem.de, The Verge, Hacker News) beim ersten Start der neuen Version einmalig dazu; vorhandene Quellen und Einstellungen bleiben unverändert. Wer eine Quelle entfernt, bekommt sie nicht erneut angelegt.
+Bei bestehenden Installationen kommen neu hinzugefügte Quellen beim ersten Start der neuen Version einmalig dazu (ZDFheute, Deutschlandfunk, BBC, Al Jazeera, Golem.de, The Verge, Hacker News; zuletzt Sportschau, Sportschau 2. Bundesliga, Phys.org, ScienceDaily, t3n, netzpolitik.org). Vorhandene Quellen und Einstellungen bleiben unverändert. Wer eine Quelle entfernt, bekommt sie nicht erneut angelegt.
 
-Stand der Feed-Prüfung (einmaliger Abruf am 26.11.2026): SPIEGEL, Financial Times, heise, ZDFheute, Deutschlandfunk, Golem, BBC und Al Jazeera lieferten aktuelle Einträge. CNN und Tagesschau waren im Test nicht abrufbar. Bei n-tv, Hacker News und der (nicht voreingestellten) Deutschen Welle zeigte der Test einen älteren Stand. Feeds ändern sich; der Status je Quelle steht im Admin-Bereich.
+**CNN** ist nicht mehr in der Standardliste: Der Feed `rss.cnn.com` liefert keine neuen Meldungen mehr und bricht die Verbindung ab. Installationen, die CNN schon haben, entfernen die Quelle im Admin-Bereich.
+
+Stand der Feed-Prüfung (einmaliger Abruf am 26.11.2026): SPIEGEL, Financial Times, heise, ZDFheute, Deutschlandfunk, Golem, BBC und Al Jazeera lieferten aktuelle Einträge. Die Tagesschau war im Test nicht abrufbar, bei n-tv und Hacker News zeigte der Test einen älteren Stand. t3n und Phys.org ließen sich abrufen. Die URLs von Sportschau, ScienceDaily und netzpolitik.org wurden nicht abgerufen; ihren Status zeigt der Admin-Bereich nach dem ersten Lauf. Feeds ändern sich; der Status je Quelle steht im Admin-Bereich.
 
 ## Inhalte und Rechte
 
@@ -70,11 +80,13 @@ curl http://localhost:8055/health
 ## Betrieb und Grenzen
 
 - Genau ein Gunicorn-Worker, sonst laufen mehrere Abrufschleifen. Kein `--preload`.
+- Der Container läuft als Benutzer `haiapp` (UID 10001). Der Name `news` ist im Basis-Image schon vergeben.
 - Login: nach 8 Fehlversuchen pro Quell-IP 15 Minuten gesperrt (im RAM). Hinter Reverse Proxy teilen sich Nutzer ggf. eine IP.
 - Für Internetbetrieb HTTPS und zusätzlichen Zugriffsschutz vorschalten.
 - Feed-URLs: private/reservierte Ziele und Redirects werden geprüft; keine vollständige DNS-Rebinding-Abwehr, daher ausgehenden Zugriff auf interne Netze zusätzlich per Firewall begrenzen.
-- Feed-Inhalt wird als reiner Text gespeichert und angezeigt (HTML wird entfernt, keine Bilder). Maximal 8000 Zeichen je Artikel.
-- Ältere, schon gespeicherte Artikel haben nach dem Update zunächst keinen Zusatzinhalt, bis sie im Feed erneut auftauchen; die Leseansicht zeigt dann den Teaser.
+- Feed-Inhalt wird als reiner Text gespeichert und angezeigt (HTML wird entfernt). Maximal 8000 Zeichen je Artikel.
+- Vorschaubilder lädt der Browser direkt vom Server des Verlags (nur HTTPS, ohne Referrer, verzögert geladen). Die Verlage sehen dabei die IP-Adresse des Besuchers. Es gibt keinen Bild-Proxy und keinen Bild-Cache; die Content-Security-Policy erlaubt dafür `img-src 'self' https:`. Bilder aus `http://`-Quellen werden auf `https://` umgestellt.
+- Ältere, schon gespeicherte Artikel haben nach einem Update zunächst keinen Zusatzinhalt und kein Bild, bis sie im Feed erneut auftauchen; die Leseansicht zeigt dann den Teaser.
 - Backup: Container stoppen, Volume `news_data` sichern.
 - Updates: neues Image abwarten, Stack in Portainer aktualisieren und Image neu ziehen; für reproduzierbare Stände SHA-Tag verwenden.
 
@@ -82,6 +94,6 @@ curl http://localhost:8055/health
 
 Projektseite unter `docs/index.html` (Settings → Pages → Branch `main`, Ordner `/docs`).
 
-## Prüfstatus
+## Prüfstand
 
-Python-Syntax und JavaScript-Syntax geprüft; Hilfsfunktionen für Textbereinigung und die Datenbank-Migration lokal getestet. Docker-Build, Browser-Test und Feed-Liveabrufe durch die App stehen bis zum ersten erfolgreichen Workflow-Lauf aus.
+Der Docker-Build läuft über GitHub Actions. Die mobile Ansicht, die Themes und die Vorschaubilder sind nicht in einem Browser getestet. Feed-Liveabrufe durch die App stehen bis zum ersten erfolgreichen Lauf auf dem Server aus.
